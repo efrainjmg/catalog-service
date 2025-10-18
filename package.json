@@ -1,0 +1,27 @@
+{
+  "name": "catalog-service",
+  "version": "1.0.0",
+  "description": "Microservicio de catálogo (TypeScript) para sistema de pagos distribuido",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "ts-node-dev --respawn src/index.ts",
+    "build": "tsc",
+    "serve": "node dist/index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.913.0",
+    "@aws-sdk/client-lambda": "^3.654.0",
+    "@aws-sdk/lib-dynamodb": "^3.654.0",
+    "express": "^4.19.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.156",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.7.5",
+    "@types/uuid": "^9.0.7",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.6.3"
+  },
+  "type": "commonjs"
+}
