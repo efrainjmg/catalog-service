@@ -72,7 +72,6 @@ resource "aws_lambda_function" "create_product" {
   environment {
     variables = {
       CATALOG_TABLE_NAME = var.catalog_table_name
-      AWS_REGION = var.region
     }
   }
 }
@@ -88,7 +87,57 @@ resource "aws_lambda_function" "list_products" {
   environment {
     variables = {
       CATALOG_TABLE_NAME = var.catalog_table_name
-      AWS_REGION = var.region
     }
   }
+}
+
+resource "aws_apigatewayv2_api" "catalog_api" {
+  name          = "catalog-api"
+  protocol_type = "HTTP"
+}
+
+resource "aws_lambda_permission" "allow_api_gateway" {
+  statement_id  = "AllowExecutionFromAPIGateway"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.list_products.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.catalog_api.execution_arn}/*/*"
+}
+
+resource "aws_apigatewayv2_integration" "list_products_integration" {
+  api_id                 = aws_apigatewayv2_api.catalog_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.list_products.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_integration" "create_product_integration" {
+  api_id                 = aws_apigatewayv2_api.catalog_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.create_product.invoke_arn
+  payload_format_version = "2.0"
+}
+
+#rutas 
+resource "aws_apigatewayv2_route" "list_products_route" {
+  api_id    = aws_apigatewayv2_api.catalog_api.id
+  route_key = "GET /products"
+  target    = "integrations/${aws_apigatewayv2_integration.list_products_integration.id}"
+}
+
+resource "aws_apigatewayv2_route" "post_products_route" {
+  api_id    = aws_apigatewayv2_api.catalog_api.id
+  route_key = "POST /products"
+  target    = "integrations/${aws_apigatewayv2_integration.create_product_integration.id}"
+}
+
+#despliegue
+resource "aws_apigatewayv2_stage" "dev" {
+  api_id      = aws_apigatewayv2_api.catalog_api.id
+  name        = "dev"
+  auto_deploy = true
+}
+
+output "catalog_api_url" {
+  value = aws_apigatewayv2_stage.dev.invoke_url
 }
